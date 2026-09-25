@@ -1,0 +1,16 @@
+{
+    "ui/bar.slint": {
+        "component": "Bar", // Name of the primary component
+        "anchors": [1, 1, 1, 0], // Right, Up, Left, Down
+        "size": [24, 24],
+        "exclusive": 0,
+        "namespace": "dragonfruit-bar"
+    },
+    "ui/dock.slint": {
+        "component": "Dock", // Name of the primary component
+        "anchors": [1, 0, 1, 1], // Right, Up, Left, Down
+        "size": [42, 42],
+        "exclusive": 0,
+        "namespace": "dragonfruit-dock"
+    }
+}

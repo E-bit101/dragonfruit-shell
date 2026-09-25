@@ -1,0 +1,8 @@
+[package]
+name = "shell"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+jsonc-parser = "0.33.2"
+layer-shika = "0.3.1"
