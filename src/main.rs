@@ -1,9 +1,17 @@
-use std::{fs, path::PathBuf};
+use std::{env, fs, path::PathBuf};
 
 use jsonc_parser::JsonObject;
-use layer_shika::prelude::*;
+use layer_shika::{calloop::TimeoutAction, prelude::*, slint::ComponentHandle, slint_interpreter::Value};
+use std::time::Duration;
+use chrono::{Local, Timelike};
 
 pub mod api;
+
+fn duration_until_next_second() -> Duration {
+    let nanos = Local::now().nanosecond();
+
+    Duration::from_nanos(1_000_000_000 - nanos as u64)
+}
 
 fn get_panel_values<'a>(value: &'a JsonObject<'a>) -> (&'a str, u8, u32, u32, i32, &'a str) {
     let component = match value.get("component") {
@@ -43,7 +51,7 @@ fn get_panel_values<'a>(value: &'a JsonObject<'a>) -> (&'a str, u8, u32, u32, i3
         }
     }
 
-    let exclusive: i32 = match value.get("anchors") {
+    let exclusive: i32 = match value.get("exclusive") {
         Some(jsonc_parser::JsonValue::Number(component)) => component.parse().unwrap(), _ => 0,
     };
 
@@ -66,40 +74,73 @@ fn add_surface(builder: SurfaceConfigBuilder, value: &jsonc_parser::JsonValue) -
 }
 
 fn main() -> Result<()> {
-    let conf = fs::read_to_string("ui/layer.jsonc").unwrap_or_default();
+    let args: Vec<String> = env::args().collect();
+
+    let mut conf_path = "config.jsonc";
+    if args.len() > 1 {
+        conf_path = &args[1];
+    }
+    
+    let conf = fs::read_to_string(PathBuf::from(env!("PWD")).join(conf_path)).unwrap_or_default();
     let data = jsonc_parser::parse_to_value(&conf, &Default::default())
-        .expect("failed to parse JSONC")
-        .expect("JSONC contained no value");
-    let ui_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("ui/shell.slint");
-
+        .expect(format!("Failed to parse {}", conf_path).as_str())
+        .expect(format!("{} contained no value or does not exist", conf_path).as_str());
+    
+    // This looks gross
     if let jsonc_parser::JsonValue::Object(object) = data {
-        let mut surfaces = object.into_iter();
-        let (_, first) = surfaces
-            .next()
-            .expect("no surfaces configured");
-        let jsonc_parser::JsonValue::Object(first) = first else { panic!("first surface must be an object"); };
+        let ui_path: &str = match object.get("shell") {
+            Some(jsonc_parser::JsonValue::String(ui_path)) => ui_path, _ => "ui/shell.slint",
+        };
+        let ui_path = PathBuf::from(env!("PWD")).join(ui_path);
 
-        let (component, anchors, width, height, exclusive, namespace) =
-            get_panel_values(&first);
+        if let Some(jsonc_parser::JsonValue::Object(panels)) = object.get("panels") {
+            let mut surfaces = panels.clone().into_iter();
+            let (_, first) = surfaces
+                .next()
+                .expect("no surfaces configured");
+            let jsonc_parser::JsonValue::Object(first) = first else { panic!("first surface must be an object"); };
 
-        let mut shell = Shell::from_file(ui_path)
-            .surface(component)
-            .width(width)
-            .height(height)
-            .anchor(AnchorEdges::new(anchors))
-            .exclusive_zone(exclusive)
-            .namespace(namespace);
+            let (component, anchors, width, height, exclusive, namespace) =
+                get_panel_values(&first);
 
-        for (_, value) in surfaces {
-            shell = add_surface(shell, &value);
+            let mut shell = Shell::from_file(ui_path)
+                .surface(component)
+                .width(width)
+                .height(height)
+                .anchor(AnchorEdges::new(anchors))
+                .exclusive_zone(exclusive)
+                .namespace(namespace);
+
+            for (_, value) in surfaces {
+                shell = add_surface(shell, &value);
+            }
+
+            // Setup timers, rust callbacks, etc
+            let mut shell = shell.build()?;
+            let event_loop = shell.event_loop_handle();
+            shell.with_all_surfaces(|_name, instance| {
+                api::setup_fns(instance);
+
+                let weak = instance.as_weak();
+
+                event_loop
+                    .add_timer(
+                        Duration::ZERO,
+                        move |_deadline, _state| {
+                            if let Some(instance) = weak.upgrade() {
+                                instance
+                                    .set_global_property("ShellAPI", "tick", Value::from(Local::now().second()))
+                                    .expect("failed to set tick");
+                            }
+
+                            TimeoutAction::ToDuration(duration_until_next_second())
+                        },
+                    )
+                    .expect("failed to add clock timer");
+            });
+
+            shell.run()?;
         }
-
-        let mut shell = shell.build()?;
-        shell.with_all_surfaces(|_name, instance| {
-            api::setup_fns(instance);
-        });
-
-        shell.run()?;
     }
 
     return Ok(());

@@ -1,4 +1,6 @@
 export global ShellAPI {
     callback add_numbers(int, int) -> int;
-    callback sub_numbers(int, int) -> int;
+    callback get_time(bool) -> string;
+
+    in-out property <int> tick: 0;
 }
