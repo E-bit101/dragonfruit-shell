@@ -5,5 +5,5 @@ edition = "2024"
 
 [dependencies]
 chrono = "0.4.45"
-jsonc-parser = "0.33.2"
+jsonc-parser = { version = "0.33.2", features = ["preserve_order"] }
 layer-shika = "0.3.1"

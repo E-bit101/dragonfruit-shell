@@ -1,17 +1,44 @@
 import { ShellAPI } from "api.slint";
+import { HorizontalBox } from "std-widgets.slint";
 
 export component Dock inherits Window {
+    background: transparent;
     property <int> tick: ShellAPI.tick;
     changed tick => {
-        txt.text = ShellAPI.get_time(false);
+        txt.text = ShellAPI.get_time(false) + " ";
     }
 
     Rectangle {
-        background: black;
+        background: #262626aa;
 
-        txt := Text {
-            text: "";
-            color: white;
+        HorizontalBox {
+            alignment: start;
+            padding: 0px;
+            Rectangle {
+                background: red;
+                width: 42px;
+                height: self.width;
+            }
+        }
+
+        HorizontalBox {
+            alignment: center;
+            padding: 5px;
+            
+            Image {
+                source: @image-url("");
+            }
+        }
+
+        HorizontalBox {
+            alignment: end;
+            padding: 0px;
+
+            txt := Text {
+                text: "";
+                color: white;
+                vertical-alignment: center;
+            }
         }
     }
 }

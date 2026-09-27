@@ -13,9 +13,19 @@ fn duration_until_next_second() -> Duration {
     Duration::from_nanos(1_000_000_000 - nanos as u64)
 }
 
-fn get_panel_values<'a>(value: &'a JsonObject<'a>) -> (&'a str, u8, u32, u32, i32, &'a str) {
+fn get_panel_values<'a>(value: &'a JsonObject<'a>) -> (&'a str, u8, u32, u32, i32, Layer, &'a str) {
     let component = match value.get("component") {
         Some(jsonc_parser::JsonValue::String(component)) => component, _ => "null",
+    };
+
+    let layer = match value.get("layer") {
+        Some(jsonc_parser::JsonValue::String(layer)) => layer, _ => "Background",
+    };
+    let layer = match layer.to_lowercase().as_str() {
+        "bottom" => Layer::Bottom,
+        "top" => Layer::Top,
+        "overlay" => Layer::Overlay,
+        _ => Layer::Background
     };
 
     let namespace = match value.get("namespace") {
@@ -55,13 +65,13 @@ fn get_panel_values<'a>(value: &'a JsonObject<'a>) -> (&'a str, u8, u32, u32, i3
         Some(jsonc_parser::JsonValue::Number(component)) => component.parse().unwrap(), _ => 0,
     };
 
-    return (component, anchors as u8, width, height, exclusive, namespace);
+    return (component, anchors as u8, width, height, exclusive, layer, namespace);
 }
 
 fn add_surface(builder: SurfaceConfigBuilder, value: &jsonc_parser::JsonValue) -> SurfaceConfigBuilder {
     let jsonc_parser::JsonValue::Object(value) = value else { return builder; };
 
-    let (component, anchors, width, height, exclusive, namespace) =
+    let (component, anchors, width, height, exclusive, layer, namespace) =
         get_panel_values(value);
 
     return builder
@@ -70,6 +80,7 @@ fn add_surface(builder: SurfaceConfigBuilder, value: &jsonc_parser::JsonValue) -
         .height(height)
         .anchor(AnchorEdges::new(anchors))
         .exclusive_zone(exclusive)
+        .layer(layer)
         .namespace(namespace);
 }
 
@@ -100,7 +111,7 @@ fn main() -> Result<()> {
                 .expect("no surfaces configured");
             let jsonc_parser::JsonValue::Object(first) = first else { panic!("first surface must be an object"); };
 
-            let (component, anchors, width, height, exclusive, namespace) =
+            let (component, anchors, width, height, exclusive, layer, namespace) =
                 get_panel_values(&first);
 
             let mut shell = Shell::from_file(ui_path)
@@ -109,6 +120,7 @@ fn main() -> Result<()> {
                 .height(height)
                 .anchor(AnchorEdges::new(anchors))
                 .exclusive_zone(exclusive)
+                .layer(layer)
                 .namespace(namespace);
 
             for (_, value) in surfaces {

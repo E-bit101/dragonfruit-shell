@@ -1,0 +1,12 @@
+export component Wallpaper inherits Window {
+    Rectangle {
+        background: black;
+        Image { 
+            source: @image-url("");
+            width: parent.width;
+            height: parent.height;
+
+            image-fit: cover; 
+        }
+    }
+}
