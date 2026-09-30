@@ -1,0 +1,37 @@
+export component IconButton inherits Rectangle {
+    in property <image> icon-source;
+    in property <bool> alt-highlight;
+    callback clicked();
+
+    border-radius: 2px;
+
+    icon := Image {
+        source: root.icon-source;
+        width: 42px - 14px;
+        height: self.width;
+    }
+
+    launcher_button := TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    background: !alt-highlight ? 
+        launcher_button.pressed
+            ? #ffffff10
+            : launcher_button.has-hover
+                ? #ffffff22
+                : #ffffff05:
+        launcher_button.pressed
+            ? #ffffff10
+            : launcher_button.has-hover
+                ? #ffffff05
+                : #ffffff00;
+
+    animate background {
+        enabled: true;
+        easing: ease-in-out;
+        duration: 0.1s;
+    }
+}

@@ -1,0 +1,35 @@
+import { HorizontalBox } from "std-widgets.slint";
+import { ShellAPI } from "../api.slint";
+export component Clock inherits Rectangle {
+    property <int> tick: ShellAPI.tick;
+    changed tick => {
+        txt.text = ShellAPI.get_time(false);
+    }
+    callback clicked();
+
+    border-radius: 3px;
+    
+    HorizontalBox {
+        txt := Text {
+            text: "";
+            color: white;
+            vertical-alignment: center;
+        }
+        padding-left: 5px;
+        padding-right: 5px;
+        padding: 0px;
+    }
+    
+
+    launcher_button := TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    background: launcher_button.pressed
+        ? #ffffff10
+        : launcher_button.has-hover
+            ? #ffffff05
+            : #ffffff00;
+}

@@ -1,32 +1,40 @@
 import { ShellAPI } from "api.slint";
-import { HorizontalBox } from "std-widgets.slint";
+import { HorizontalBox, GroupBox } from "std-widgets.slint";
+import { IconButton } from "widgets/icon_button.slint";
+import { ControlCenter } from "widgets/control_center.slint";
+import { Clock } from "widgets/clock.slint";
 
 export component Dock inherits Window {
     background: transparent;
-    property <int> tick: ShellAPI.tick;
-    changed tick => {
-        txt.text = ShellAPI.get_time(false) + " ";
-    }
 
     Rectangle {
         background: #262626aa;
 
         HorizontalBox {
             alignment: start;
-            padding: 0px;
-            Rectangle {
-                background: red;
-                width: 42px;
-                height: self.width;
+            padding: 5px;
+            IconButton {
+                width: self.height;
+                alt-highlight: true;
+                icon-source: @image-url("assets/widgets.svg");
+
+                clicked => {
+                    
+                }
             }
         }
 
         HorizontalBox {
             alignment: center;
             padding: 5px;
-            
-            Image {
-                source: @image-url("");
+            width: self.height;
+            IconButton {
+                alt-highlight: false;
+                icon-source: @image-url("assets/launcher.svg");
+
+                clicked => {
+                    
+                }
             }
         }
 
@@ -34,11 +42,26 @@ export component Dock inherits Window {
             alignment: end;
             padding: 0px;
 
-            txt := Text {
-                text: "";
-                color: white;
-                vertical-alignment: center;
+            HorizontalBox {
+                padding: 5px;
+                IconButton {
+                    alt-highlight: true;
+                    width: self.height;
+                    icon-source: @image-url("assets/expand.svg");
+
+                    clicked => {
+                        
+                    }
+                }
+                ControlCenter {
+                    width: 42px * 2;
+                }
+
+                Clock {}
             }
+            
+
+            
         }
     }
 }

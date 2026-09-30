@@ -1,0 +1,29 @@
+import { HorizontalBox } from "std-widgets.slint";
+export component ControlCenter inherits Rectangle {
+    callback clicked();
+
+    border-radius: 3px;
+    HorizontalBox {
+        Image {
+            source: @image-url("/home/slime89/Documents/CodingProjects/Rust/dragonfruit-shell-gtk/theme/icons/wifi-3.svg");
+        }
+        Image {
+            source: @image-url("/home/slime89/Documents/CodingProjects/Rust/dragonfruit-shell-gtk/theme/icons/bat-5.svg");
+        }
+        Image {
+            source: @image-url("/home/slime89/Documents/CodingProjects/Rust/dragonfruit-shell-gtk/theme/icons/volume-2.svg");
+        }
+    }
+
+    launcher_button := TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    background: launcher_button.pressed
+        ? #ffffff10
+        : launcher_button.has-hover
+            ? #ffffff05
+            : #ffffff00;
+}
